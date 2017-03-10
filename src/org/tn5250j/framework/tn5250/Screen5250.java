@@ -2797,6 +2797,23 @@ public class Screen5250 {
 
 	}
 
+	public String getDumpScreen() {
+
+		StringBuffer sb = new StringBuffer();
+		char[] s = getScreenAsChars();
+		int c = getColumns();
+		int l = getRows() * c;
+		int col = 0;
+		for (int x = 0; x < l; x++, col++) {
+			sb.append(s[x]);
+			if (col == c) {
+				sb.append('\n');
+				col = 0;
+			}
+		}
+		return sb.toString();
+	}	
+	
 	/**
 	 * Add a field to the field format table.
 	 *
