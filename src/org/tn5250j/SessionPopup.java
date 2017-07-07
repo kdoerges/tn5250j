@@ -25,20 +25,38 @@
  */
 package org.tn5250j;
 
-import org.tn5250j.framework.tn5250.Screen5250;
-import org.tn5250j.framework.tn5250.tnvt;
-import org.tn5250j.gui.HexCharMapDialog;
-import org.tn5250j.interfaces.OptionAccessFactory;
-import org.tn5250j.keyboard.configure.KeyConfigure;
-import org.tn5250j.mailtools.SendEMailDialog;
-import org.tn5250j.keyboard.KeyMnemonic;
-import org.tn5250j.tools.*;
-import org.tn5250j.tools.logging.TN5250jLogFactory;
-import org.tn5250j.tools.logging.TN5250jLogger;
+import static org.tn5250j.keyboard.KeyMnemonic.ATTN;
+import static org.tn5250j.keyboard.KeyMnemonic.CLOSE;
+import static org.tn5250j.keyboard.KeyMnemonic.COPY;
+import static org.tn5250j.keyboard.KeyMnemonic.DISP_ATTRIBUTES;
+import static org.tn5250j.keyboard.KeyMnemonic.DISP_MESSAGES;
+import static org.tn5250j.keyboard.KeyMnemonic.DUP_FIELD;
+import static org.tn5250j.keyboard.KeyMnemonic.ERASE_EOF;
+import static org.tn5250j.keyboard.KeyMnemonic.E_MAIL;
+import static org.tn5250j.keyboard.KeyMnemonic.FIELD_MINUS;
+import static org.tn5250j.keyboard.KeyMnemonic.FIELD_PLUS;
+import static org.tn5250j.keyboard.KeyMnemonic.FILE_TRANSFER;
+import static org.tn5250j.keyboard.KeyMnemonic.HELP;
+import static org.tn5250j.keyboard.KeyMnemonic.NEW_LINE;
+import static org.tn5250j.keyboard.KeyMnemonic.OPEN_NEW;
+import static org.tn5250j.keyboard.KeyMnemonic.PASTE;
+import static org.tn5250j.keyboard.KeyMnemonic.PRINT;
+import static org.tn5250j.keyboard.KeyMnemonic.PRINT_SCREEN;
+import static org.tn5250j.keyboard.KeyMnemonic.QUICK_MAIL;
+import static org.tn5250j.keyboard.KeyMnemonic.RESET;
+import static org.tn5250j.keyboard.KeyMnemonic.SPOOL_FILE;
+import static org.tn5250j.keyboard.KeyMnemonic.SYSREQ;
+import static org.tn5250j.keyboard.KeyMnemonic.TOGGLE_CONNECTION;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.datatransfer.*;
+import java.awt.Frame;
+import java.awt.HeadlessException;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -48,7 +66,35 @@ import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.tn5250j.keyboard.KeyMnemonic.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+
+import org.tn5250j.framework.tn5250.Screen5250;
+import org.tn5250j.framework.tn5250.ScreenField;
+import org.tn5250j.framework.tn5250.ScreenFields;
+import org.tn5250j.framework.tn5250.tnvt;
+import org.tn5250j.gui.HexCharMapDialog;
+import org.tn5250j.interfaces.OptionAccessFactory;
+import org.tn5250j.keyboard.KeyMnemonic;
+import org.tn5250j.keyboard.configure.KeyConfigure;
+import org.tn5250j.mailtools.SendEMailDialog;
+import org.tn5250j.tools.GUIGraphicsUtils;
+import org.tn5250j.tools.LangTool;
+import org.tn5250j.tools.LoadMacroMenu;
+import org.tn5250j.tools.Macronizer;
+import org.tn5250j.tools.SendScreenImageToFile;
+import org.tn5250j.tools.SendScreenToFile;
+import org.tn5250j.tools.XTFRFile;
+import org.tn5250j.tools.logging.TN5250jLogFactory;
+import org.tn5250j.tools.logging.TN5250jLogger;
 
 /**
  * Custom
@@ -72,6 +118,18 @@ public class SessionPopup {
     final int pos = sessiongui.getPosFromView(me.getX(), me.getY());
 
     if (!sessiongui.rubberband.isAreaSelected() && screen.isInField(pos, false)) {
+    	
+    	int fieldId = spyHere();
+        action = new AbstractAction(LangTool.getString("popup.screenFieldId") + ": " + fieldId) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            }
+          };
+        popup.add(action);
+        popup.addSeparator();
+    	
       action = new AbstractAction(LangTool.getString("popup.copy")) {
         private static final long serialVersionUID = 1L;
 
@@ -156,6 +214,7 @@ public class SessionPopup {
       };
       popup.add(action);
 
+      
       Rectangle workR = new Rectangle();
       if (sessiongui.rubberband.isAreaSelected()) {
 
@@ -611,6 +670,30 @@ public class SessionPopup {
     }
   }
 
+  private int spyHere() {
+	  int y = screen.getCurrentRow() - 1;
+	  int x = screen.getCurrentCol() - 1;
+	  log.info("spy here: " + x + ":" + y);
+
+	  ScreenFields allScreenFields = screen.getScreenFields();
+	  for (ScreenField aField : allScreenFields.getFields()) {
+		  if (aField.startRow() == y) {
+			  // correct row
+			  if ((aField.startCol() <= x) && ((aField.startCol() + aField.getFieldLength()) >= x)) {
+				  log.info("Screenfield found with id: " + aField.getFieldId());
+				  return aField.getFieldId();
+			  }
+		  }
+	  }
+	  return -1;
+  }
+  
+  private void spyArea() {
+	  log.info("spy area");
+	  // sessiongui.getComponentAt(arg0, arg1)
+	  
+  }
+  
   private void sumArea(boolean which) {
 
 

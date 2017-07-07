@@ -6,6 +6,13 @@
 	<artifactId>tn5250j</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
+	<properties>
+		<!-- Optional URL to server. Default value is http://localhost:9000 -->
+		<sonar.host.url>
+			https://sonar.vonessenkg.de
+		</sonar.host.url>
+	</properties>
+	
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<testSourceDirectory>tests</testSourceDirectory>
@@ -68,28 +75,9 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.sonatype.plugins</groupId>
-				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.8</version>
-				<executions>
-					<execution>
-						<id>default-deploy</id>
-						<phase>deploy</phase>
-						<goals>
-							<goal>deploy</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<serverId>nexus</serverId>
-					<nexusUrl>http://127.0.0.1:8081/</nexusUrl>
-					<skipStaging>true</skipStaging>
-				</configuration>
-			</plugin>
-			<plugin>
 				<groupId>org.sonarsource.scanner.maven</groupId>
 				<artifactId>sonar-maven-plugin</artifactId>
-				<version>3.2</version>
+				<version>3.3.0.603</version>
 			</plugin>
 			<plugin>
 				<artifactId>maven-dependency-plugin</artifactId>
