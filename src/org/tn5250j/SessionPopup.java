@@ -119,8 +119,7 @@ public class SessionPopup {
 
     if (!sessiongui.rubberband.isAreaSelected() && screen.isInField(pos, false)) {
     	
-    	int fieldId = spyHere();
-        action = new AbstractAction(LangTool.getString("popup.screenFieldId") + ": " + fieldId) {
+        action = new AbstractAction(LangTool.getString("popup.screenFieldId") + ": " + getCurrentScreenField()) {
             private static final long serialVersionUID = 1L;
 
             @Override
@@ -223,6 +222,13 @@ public class SessionPopup {
 
         popup.addSeparator();
 
+        // TESTAUTOMATION
+        // if only one row selected, print start x:y position
+        if (workR.height == 1) {
+        	menuItem = new JMenuItem(LangTool.getString("popup.startPos") + " " + workR.getMinY() + ":" + workR.getMinX());
+        	popup.add(menuItem);
+        }
+        
         menuItem = new JMenuItem(LangTool.getString("popup.selectedColumns")
             + " " + workR.width);
         menuItem.setArmed(false);
@@ -670,10 +676,9 @@ public class SessionPopup {
     }
   }
 
-  private int spyHere() {
+  private int getCurrentScreenField() {
 	  int y = screen.getCurrentRow() - 1;
 	  int x = screen.getCurrentCol() - 1;
-	  log.info("spy here: " + x + ":" + y);
 
 	  ScreenFields allScreenFields = screen.getScreenFields();
 	  for (ScreenField aField : allScreenFields.getFields()) {
@@ -688,11 +693,6 @@ public class SessionPopup {
 	  return -1;
   }
   
-  private void spyArea() {
-	  log.info("spy area");
-	  // sessiongui.getComponentAt(arg0, arg1)
-	  
-  }
   
   private void sumArea(boolean which) {
 
